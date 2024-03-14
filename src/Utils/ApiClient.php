@@ -8,65 +8,69 @@ use GuzzleHttp\RequestOptions;
 
 class ApiClient
 {
-    /** @var Client */
-    private $client;
-
     private $baseUrl;
 
-    private $defaultHeaders;
+    private $defaultHeaders = array();
 
-    public function __construct()
-    {
-        $this->client = new Client([
-            'base_uri' => $this->baseUrl,
-            RequestOptions::TIMEOUT => 500,
-            RequestOptions::HEADERS => $this->defaultHeaders,
-        ]);
-    }
+    private $authenticationHeaders = array();
 
     public function request(
         string $method, 
         string $endpoint, 
         array $body = [],
-        array $headers = [],
+        array $customHeaders = [],
+        bool $includeAuthenticationHeaders = true
     ) {
         try {
+            $client = new Client([
+                'base_uri' => $this->getBaseUrl(),
+                RequestOptions::TIMEOUT => 500,
+            ]);
+
             $options = [];
             if (count($body) > 0) {
                 $options[RequestOptions::JSON] = $body;
             }
 
-            if (count($headers) > 0) {
-                $options[RequestOptions::HEADERS] = $headers;
+            $allHeaders = $this->getDefaultHeaders();
+
+            if ($includeAuthenticationHeaders) {
+                $allHeaders = array_merge($allHeaders, $this->getAuthenticationHeaders());
             }
+
+            if (count($customHeaders) > 0) {
+                $allHeaders = array_merge($allHeaders, $customHeaders);
+            }
+
+            $options[RequestOptions::HEADERS] = $allHeaders;
 
             switch ($method) {
                 case 'POST':
-                    $response = $this->client->post(
+                    $response = $client->post(
                         $endpoint,
                         $options
                     );
                     break;
                 case 'PUT':
-                    $response = $this->client->put(
+                    $response = $client->put(
                         $endpoint,
                         $options
                     );
                     break;
                 case 'DELETE':
-                    $response = $this->client->delete(
+                    $response = $client->delete(
                         $endpoint,
                         $options
                     );
                     break;
                 case 'PATCH':
-                    $response = $this->client->delete(
+                    $response = $client->delete(
                         $endpoint,
                         $options
                     );
                     break;
                 case 'GET':
-                    $response = $this->client->get(
+                    $response = $client->get(
                         $endpoint,
                         $options
                     );
@@ -74,7 +78,7 @@ class ApiClient
             }
         } catch (Exception $exception) {
             report($exception);
-            throw new Exception('Bad response on request in IntegrationService.');
+            throw new Exception('Bad response on request in IntegrationService. Message: '. $exception->getMessage());
         }
 
         return $this->verifyResponse($response); 
@@ -100,8 +104,28 @@ class ApiClient
         $this->baseUrl = $baseUrl;
     }
 
+    public function getBaseUrl()
+    {
+        return $this->baseUrl;
+    }
+
     public function setDefaultHeaders(array $headers)
     {
         $this->defaultHeaders = $headers;
+    }
+
+    public function getDefaultHeaders()
+    {
+        return $this->defaultHeaders;
+    }
+
+    public function setAuthenticationHeaders(array $headers)
+    {
+        $this->authenticationHeaders = $headers;
+    }
+
+    public function getAuthenticationHeaders()
+    {
+        return $this->authenticationHeaders;
     }
 }

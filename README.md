@@ -12,20 +12,23 @@ Brendan&MacKenzie's Integration Manager is a package to easily connect API's to 
 2. Run `php artisan vendor:publish --tag=integration-config` to publish the config file.
 3. Don't forget to add the names of the integrations you want to implement inside the `options` array in your `integrations.php`config file.
 4. Run `php artisan vendor:publish --tag=integration-migrations` to publish the migration file.
-5. Run `php artisan migrate` to migrate the integration tables.
+5. Run `php artisan migrate` to migrate the integration tables. Your options in the config file will be seeded aswell.
 
 ## Define an integration for a project model ##
-To link an integration and it's credentials to a model inside your own project, simply create an Integration model linked to your model (polyformic relation) and make sure you link the right IntegrationOption.
+To link an integration and it's credentials to a model inside your own project, simply create an Integration model, link it to your model (polyformic relation), make sure you link the right IntegrationOption and you're done!
 
 ```
     use BrendanMacKenzie\IntegrationManager\Models\Integration;
 
     // Find the right integration.
-    $integrationOption = IntegrationOption::where('name', 'whatsapp')->first();
+    $integrationOption = IntegrationOption::where('name', 'WhatsApp')->first();
 
     // Create an integration rule for your model.
     $integration = Integration::create([
         'integration_option_id' => $integrationOption->id,
+        'base_url' => 'https://api.whatsapp.com/v1',
+        'authorization_endpoint' => '/oauth/code',
+        'authentication_endpoint' => '/oauth/token',
     ]);
 
     // Associate your model to the integration.
@@ -38,7 +41,7 @@ To link an integration and it's credentials to a model inside your own project, 
         'user_id' => 1234,
     ];
 
-    $this->whatsAppService->setCredentials($credentials);
+    $integration->setCredentials($credentials);
     
 ```
 
@@ -52,28 +55,44 @@ For example if you want to build an integration with the WhatsApp API, you can c
 
     namespace App\Services;
 
-    use BrendanMacKenzie\IntegrationManager\Utils\IntegrationService;
+    use BrendanMacKenzie\IntegrationManager\Utils\ApiClient;
     use BrendanMacKenzie\IntegrationManager\Models\Integration;
+    use BrendanMacKenzie\IntegrationManager\Utils\IntegrationService;
 
     class WhatsAppService extends IntegrationService
     {
+        /** @var Integration */
+        private $integration;
+
+        private $defaultHeaders = [
+            'Accept' => 'application/json',
+            'Content-Type' => 'application/json',
+        ];
+
+        /** @var ApiClient */
+        private $apiClient;
+
         public function __construct(Integration $integration)
         {
+            $apiClient->setBaseUrl($this->integration->base_url);
+            $apiClient->setDefaultHeaders($this->defaultHeaders);
+            
+            $this->apiClient = $apiClient;
             $this->integration = $integration;
-            $this->baseUrl = 'https://api.whatsapp.com';
-            $this->defaultHeaders = [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-            ];
 
-            parent::construct();
+            parent::__construct($apiClient);
         }
 
         public function authenticate(): void
         {
-            // Write your authentication logic here..
+            // Write your authentication logic here.
+            // We predefined the OAuth Authorization Code Grant, OAuth Client Credential Grant and a API Key flow. You can use them in this method, just like the examples below.
             // The package is checking this function everytime it is making a request to the API.
-            // Make sure you write it with that in mind.
+            // Make sure you write it with that in mind if you're building a custom authentication flow here.
+            
+            // Make sure you set the Authentication Headers in this function.
+            $authHeaders = $oAuthAuthorizationCodeFlow->getAuthenticationHeaders();
+            $this->apiClient->setAuthenticationHeaders($authHeaders);
         }
 
         // Example of a request on the WhatsApp API build with Integration Manager:
@@ -86,12 +105,15 @@ For example if you want to build an integration with the WhatsApp API, you can c
             ];
 
             $headers = [
-                // Get a credential value you stored in the integration model.
-                'Extra-Token' => $this->getCredential('extra_token');
+                // Add custom headers if needed for the request.
+                'X-Custom-Header' => 'test'
             ];
 
             // Build all requests with one simple method..
             $response = $this->call('GET', '/chats', $body, $headers);
+
+            // If you want to make a request which does not need authentication headers, use:
+            $response = $this->call('GET', '/chats', $body, $headers, false);
 
             return $response->data;
         }
@@ -99,21 +121,21 @@ For example if you want to build an integration with the WhatsApp API, you can c
     }
 ```
 
-## Available methods ##
+## Available methods on IntegrationService ##
 
 | Method    | Description |
 | -------- | ------- |
 | getIntegrationName()  | Returns the name of the integration    |
-| setCredentials(array $credentials) | Securely store a set of credentials of the integration for your model. Data is encrypted.     |
-| addCredential(string $key, string $value)    | Securely add one credential to the set of credentials of the integration. Data is encrypted.    |
-| removeCredential(string $key)    | Remove one credential on the set of credentials for the integration.    |
-| getCredential(string $key)    | Retrieve the decrypted value of a credential.   |
 | call(string $method, string $endpoint, array $body = [], array $headers = []) | Make a request to the API of the integration. Return the response in the right format.    |
 
-## Tools ##
+## Available methods on the Integration model ##
 
-- TODO: Build a default OAuth flow for in the authenticate logic. Keep all the authentication flows in mind.<br />
-- TODO: Build a default API Key and ID flow for in the authenticate logic.
+| Method    | Description |
+| -------- | ------- |
+| setCredentials(array $credentials)  | Set a new array with credentials. This method overrides the already existing credentials set.    |
+| addCredential(string $key, string $value)  | Add a credential to the set of credentials. If the credential already exists, it replaces it.    |
+| removeCredential(string $key)  | Remove a credential attribute from the set of credentials.   |
+| getCredential(string $key)  | Returns the decrypted value of a credential attribute.    |
 
 ## Acknowledgements ##
  - [Brendan&MacKenzie](https://www.brendan-mackenzie.com)

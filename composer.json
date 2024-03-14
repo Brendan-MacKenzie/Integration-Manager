@@ -25,17 +25,14 @@
     "minimum-stability": "stable",
     "autoload": {
         "psr-4": {
-          "BrendanMacKenzie\\AuthServerClient\\": "src"
+          "BrendanMacKenzie\\IntegrationManager\\": "src"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
                 "BrendanMacKenzie\\IntegrationManager\\IntegrationServiceProvider"
-            ],
-            "aliases": {
-                "IntegrationManager": "BrendanMacKenzie\\IntegrationManager\\Facades\\IntegrationManager"
-            }
+            ]
         }
     }
 }

@@ -19,10 +19,12 @@ class IntegrationServiceProvider extends ServiceProvider
       ], 'integration-config');
 
       $this->publishes([
-        __DIR__.'/../database/migrations/' => database_path('migrations')
+        __DIR__.'/database/migrations/' => database_path('migrations')
     ], 'integration-migrations');
     }
 
-    $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+    $this->loadMigrationsFrom(__DIR__.'/database/migrations');
+
+    $this->loadRoutesFrom(__DIR__.'/routes/web.php');
   }
 }

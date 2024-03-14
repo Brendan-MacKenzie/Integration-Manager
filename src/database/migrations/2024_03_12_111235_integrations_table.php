@@ -12,17 +12,6 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('integrations', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-            $table->nullableMorphs('owner');
-            $table->unsignedBigInteger('integration_option_id');
-            $table->foreign('integration_option_id')->references('id')->on('integration_options')
-                ->onDelete('cascade')
-                ->onUpdate('restrict');
-            $table->text('credentials')->nullable();
-        });
-
         Schema::create('integration_options', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
@@ -34,6 +23,20 @@ return new class extends Migration
                 IntegrationOption::firstOrCreate(['name' => $optionName]);
             }
         }
+        
+        Schema::create('integrations', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
+            $table->nullableMorphs('owner');
+            $table->unsignedBigInteger('integration_option_id');
+            $table->foreign('integration_option_id')->references('id')->on('integration_options')
+                ->onDelete('cascade')
+                ->onUpdate('restrict');
+            $table->text('credentials')->nullable();
+            $table->string('base_url');
+            $table->string('authorization_endpoint')->nullable();
+            $table->string('authentication_endpoint')->nullable();
+        });
     }
 
     /**
