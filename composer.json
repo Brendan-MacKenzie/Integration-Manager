@@ -1,0 +1,41 @@
+{
+    "name": "brendan-mackenzie/integration-manager",
+    "description": "Logic written bij Brendan&MacKenzie for writing fast integrations with API's in Laravel.",
+    "type": "library",
+    "authors": [
+        {
+          "name": "Wouter de Berg",
+          "email": "wouter@brendan-mackenzie.com"
+        },
+        {
+            "name": "Terence Nelson",
+            "email": "terence@brendan-mackenzie.com"
+        }
+      ],
+    "require": {
+        "php": ">=7.3|~8.0.0|~8.1.0",
+        "ext-curl": "*",
+        "ext-json": "*",
+        "guzzlehttp/guzzle": "^7.5"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.0"
+    },
+    "license": "MIT",
+    "minimum-stability": "stable",
+    "autoload": {
+        "psr-4": {
+          "BrendanMacKenzie\\AuthServerClient\\": "src"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "BrendanMacKenzie\\IntegrationManager\\IntegrationServiceProvider"
+            ],
+            "aliases": {
+                "IntegrationManager": "BrendanMacKenzie\\IntegrationManager\\Facades\\IntegrationManager"
+            }
+        }
+    }
+}
