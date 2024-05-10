@@ -68,6 +68,8 @@ class OAuthClientCredentialFlow implements AuthenticationInterface
             $this->integration->addCredential('access_token', $accessToken);
             $this->integration->addCredential('expires_in', Carbon::now()->addSeconds($expiresIn)->toDateTimeString());
         } catch (Exception $exception) {
+            $this->integration->removeCredential('access_token');
+            $this->integration->removeCredential('expires_in');
             throw $exception;
         }
     }

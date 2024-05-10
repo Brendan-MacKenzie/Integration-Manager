@@ -50,7 +50,9 @@ class Integration extends Model
     public function removeCredential(string $key)
     {
         $credentials = $this->decrypt();
-        unset($credentials[$key]);
+        if (array_key_exists($key, $credentials)) {
+            unset($credentials[$key]);
+        }
         $this->setCredentials($credentials);
     }
 

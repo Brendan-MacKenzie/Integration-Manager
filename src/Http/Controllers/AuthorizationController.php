@@ -30,11 +30,22 @@ class AuthorizationController extends Controller
                     // Set authorization code in credentials.
                     $integration->setCredential('code', $request->input('code'));
                 } else {
+                    $integration->removeCredential('state');
+                    $integration->removeCredential('code');
+                    $integration->removeCredential('access_token');
+                    $integration->removeCredential('expires_in');
                     throw new OAuthException("Redirect contains invalid state.", 500);
                 }
-            } else{
+            } else {
+                $integration->removeCredential('state');
+                $integration->removeCredential('code');
+                $integration->removeCredential('access_token');
+                $integration->removeCredential('expires_in');
                 throw new OAuthException("Integration requires state.", 500);
             }
+        } else {
+            // Set authorization code in credentials.
+            $integration->setCredential('code', $request->input('code'));
         }
 
         // Get access token

@@ -5,6 +5,7 @@ namespace BrendanMacKenzie\IntegrationManager\Flows;
 use BrendanMacKenzie\IntegrationManager\Exceptions\OAuthException;
 use BrendanMacKenzie\IntegrationManager\Models\Integration;
 use BrendanMacKenzie\IntegrationManager\Utils\ApiClient;
+use Illuminate\Support\Str;
 use Carbon\Carbon;
 use Exception;
 
@@ -12,11 +13,16 @@ class OAuthAuthorizationCodeFlow implements AuthenticationInterface
 {
     private $integration;
     private $apiClient;
+    private $withState;
 
-    public function __construct(Integration $integration, ApiClient $apiClient)
-    {
+    public function __construct(
+        Integration $integration, 
+        ApiClient $apiClient,
+        bool $withState = false,
+    ) {
         $this->integration = $integration;
         $this->apiClient = $apiClient;
+        $this->withState = $withState;
     }
 
     private function getRedirectUrl(int $id)
@@ -35,13 +41,11 @@ class OAuthAuthorizationCodeFlow implements AuthenticationInterface
 
                 if (Carbon::parse($expiresIn)->lte(Carbon::now()->addWeek())) {
                     // Authorize access token
-                    $this->authorize();
-                    sleep(3);
+                    return $this->authorize();
                 }
             }
         } else {
-            $this->authorize();
-            sleep(3);
+            return $this->authorize();
         }
     }
 
@@ -80,8 +84,20 @@ class OAuthAuthorizationCodeFlow implements AuthenticationInterface
             $expiresIn = array_key_exists('expires_in', $data) ? $data['expires_in'] : null;
 
             $this->integration->addCredential('access_token', $accessToken);
-            $this->integration->addCredential('expires_in', Carbon::now()->addSeconds($expiresIn)->toDateTimeString());
+
+            if ($expiresIn) {
+                $this->integration->addCredential('expires_in', Carbon::now()->addSeconds($expiresIn)->toDateTimeString());
+            }
+
+            // Make sure you set the Authentication Headers in this function.
+            $this->apiClient->setAuthenticationHeaders([
+                'Authorization' => 'Bearer '.$this->integration->getCredential('access_token'),
+            ]);
         } catch (Exception $exception) {
+            $this->integration->removeCredential('state');
+            $this->integration->removeCredential('code');
+            $this->integration->removeCredential('access_token');
+            $this->integration->removeCredential('expires_in');
             throw $exception;
         }
     }
@@ -94,16 +110,17 @@ class OAuthAuthorizationCodeFlow implements AuthenticationInterface
         ];
     }
 
-    public function authorize() 
+    private function authorize() 
     {
         $authorizationEndpoint = $this->integration->authorization_endpoint;
         $clientId = $this->integration->getCredential('client_id');
-        $state = $this->integration->getCredential('state');
         $scope = $this->integration->getCredential('scope');
         $redirectUri = $this->getRedirectUrl($this->integration->id);
         $authorizationEndpoint = $authorizationEndpoint.'?response_type=code&client_id='.$clientId.'&redirect_uri='.$redirectUri;
 
-        if ($state) {
+        if ($this->withState) {
+            $this->integration->addCredential('state', Str::random(16));
+            $state = $this->integration->getCredential('state');
             $authorizationEndpoint = $authorizationEndpoint.'&state='.$state;
         }
 
@@ -111,6 +128,14 @@ class OAuthAuthorizationCodeFlow implements AuthenticationInterface
             $authorizationEndpoint = $authorizationEndpoint.'&scope='.$scope;
         }
 
-        return $this->apiClient->request('GET', $authorizationEndpoint, [], [], false);
+        try {
+            return $this->apiClient->request('GET', $authorizationEndpoint, [], [], false);
+        } catch (Exception $exception) {
+            $this->integration->removeCredential('state');
+            $this->integration->removeCredential('code');
+            $this->integration->removeCredential('access_token');
+            $this->integration->removeCredential('expires_in');
+            throw $exception;
+        }
     }
 }
