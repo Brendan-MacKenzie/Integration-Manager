@@ -37,26 +37,25 @@ class OAuthClientCredentialFlow implements AuthenticationInterface
         } else {
             $this->getAccessToken();
         }
+
+        $this->apiClient->setAuthenticationHeaders([
+            'Authorization' => 'Bearer '.$this->integration->getCredential('access_token'),
+        ]);
     }
 
     public function getAccessToken()
     {
-        if ($this->integration->authentication_endpoint) {
+        if (!$this->integration->authentication_endpoint) {
             throw new OAuthException("Authentication endpoint not provided.");
         }
-        
         $body = [
-            'grant_type' => 'authorization_code',
+            'grant_type' => 'client_credentials',
             'client_id' => $this->integration->getCredential('client_id'),
             'client_secret' => $this->integration->getCredential('client_secret'),
         ];
-        
-        $customHeader = [
-            'Content-Type' => 'x-www-form-urlencoded',
-        ];
 
         try {
-            $data = $this->apiClient->request('POST', $this->integration->authentication_endpoint, $body, $customHeader, false);
+            $data = $this->apiClient->request('POST', $this->integration->authentication_endpoint, $body, [], false);
 
             if (!array_key_exists('access_token', $data)) {
                 throw new OAuthException('Access token not received.');
