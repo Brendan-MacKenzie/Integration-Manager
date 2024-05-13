@@ -5,10 +5,13 @@ namespace BrendanMacKenzie\IntegrationManager\Utils;
 use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\RequestOptions;
+use Illuminate\Support\Facades\Log;
 
 class ApiClient
 {
     private $baseUrl;
+
+    private $authUrl;
 
     private $defaultHeaders = array();
 
@@ -19,17 +22,24 @@ class ApiClient
         string $endpoint, 
         array $body = [],
         array $customHeaders = [],
-        bool $includeAuthenticationHeaders = true
+        bool $includeAuthenticationHeaders = true,
+        bool $isAuthUrl = false,
+        bool $useFormParams = false
     ) {
         try {
+            $url = ($isAuthUrl) ? $this->getAuthUrl() : $this->getBaseUrl();
             $client = new Client([
-                'base_uri' => $this->getBaseUrl(),
+                'base_uri' => $url,
                 RequestOptions::TIMEOUT => 500,
             ]);
 
             $options = [];
             if (count($body) > 0) {
-                $options[RequestOptions::JSON] = $body;
+                if ($useFormParams) {
+                    $options[RequestOptions::FORM_PARAMS] = $body;
+                } else {
+                    $options[RequestOptions::JSON] = $body;
+                }
             }
 
             $allHeaders = $this->getDefaultHeaders();
@@ -43,6 +53,9 @@ class ApiClient
             }
 
             $options[RequestOptions::HEADERS] = $allHeaders;
+
+            Log::debug('REQUEST:');
+            Log::debug($options);
 
             switch ($method) {
                 case 'POST':
@@ -95,7 +108,7 @@ class ApiClient
 
             throw new Exception("Bad Integration Response: {$contents}");
         }
-
+        
         return json_decode($response->getBody(), true);
     }
 
@@ -107,6 +120,16 @@ class ApiClient
     public function getBaseUrl()
     {
         return $this->baseUrl;
+    }
+
+    public function setAuthUrl(?string $authUrl = null)
+    {
+        $this->authUrl = $authUrl;
+    }
+
+    public function getAuthUrl()
+    {
+        return $this->authUrl ?? $this->baseUrl;
     }
 
     public function setDefaultHeaders(array $headers)

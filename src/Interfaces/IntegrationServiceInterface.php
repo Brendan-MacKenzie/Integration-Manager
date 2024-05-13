@@ -4,5 +4,5 @@ namespace BrendanMacKenzie\IntegrationManager\Interfaces;
 
 interface IntegrationServiceInterface
 {
-    public function authenticate(): void;
+    public function authenticate();
 }

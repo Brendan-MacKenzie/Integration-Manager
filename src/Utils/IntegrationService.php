@@ -19,6 +19,7 @@ abstract class IntegrationService implements IntegrationServiceInterface
     {
         $this->apiClient = $apiClient;
         $apiClient->setBaseUrl($this->integration->base_url);
+        $apiClient->setAuthUrl($this->integration->auth_url);
         $apiClient->setDefaultHeaders($this->defaultHeaders);
     }
 
@@ -35,7 +36,10 @@ abstract class IntegrationService implements IntegrationServiceInterface
         bool $includeAuthentication = true
     ) {
         if ($includeAuthentication) {
-            $this->authenticate();
+            $authentication = $this->authenticate();
+            if ($authentication) {
+                return $authentication;
+            }
         }
 
         return $this->apiClient->request($method, $endpoint, $body, $headers, $includeAuthentication);

@@ -8,4 +8,6 @@ return [
     'options' => [
         // Add names here...
     ],
+
+    'redirect_uri' => '/integration/callback',
 ];

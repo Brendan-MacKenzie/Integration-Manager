@@ -14,7 +14,12 @@ Brendan&MacKenzie's Integration Manager is a package to easily connect API's to 
 4. Run `php artisan vendor:publish --tag=integration-migrations` to publish the migration file.
 5. Run `php artisan migrate` to migrate the integration tables. Your options in the config file will be seeded aswell.
 
-## Define a custom integration for a project model ##
+## You have 3 options to connect to an API with the Integration Manager
+- Option 1: With the custom authentication flow.
+- Option 2: With the OAuth Authorization Grant flow.
+- Option 3: With the OAuth Client Credential Grant flow.
+
+## Option 1: Define a custom integration for a project model ##
 To link an integration and it's credentials to a model inside your own project, simply create an Integration model, link it to your model (polyformic relation), make sure you link the right IntegrationOption and you're done!
 
 ```
@@ -28,6 +33,7 @@ To link an integration and it's credentials to a model inside your own project, 
     $integration = Integration::create([
         'integration_option_id' => $integrationOption->id,
         'base_url' => 'https://api.whatsapp.com/v1/',
+        'auth_url' => 'https://api.whatsapp.com/v1/',
         'authorization_endpoint' => null,
         'authentication_endpoint' => null,
     ]);
@@ -45,7 +51,7 @@ To link an integration and it's credentials to a model inside your own project, 
     
 ```
 
-## Building a custom integration service ##
+## Option 1: Building a custom integration service ##
 To implement an API integration in your Laravel project you can extend the abstract class `BrendanMacKenzie\IntegrationManager\Utils\IntegrationService.php` inside your own integration service class.
 
 For example if you want to build an integration with the WhatsApp API, you can create your own `WhatsAppService.php` class like this:
@@ -120,7 +126,7 @@ For example if you want to build an integration with the WhatsApp API, you can c
     }
 ```
 
-## Define a OAuth Authorization flow integration for a project model ##
+## Option 2: Define an OAuth Authorization flow integration for a project model ##
 To create an integration with the standard OAuth Authorization flow and link it's credentials to a model inside your own project, start by doing the following...
 
 ```
@@ -133,7 +139,8 @@ To create an integration with the standard OAuth Authorization flow and link it'
     // Create an integration rule for your model.
     $integration = Integration::create([
         'integration_option_id' => $integrationOption->id,
-        'base_url' => 'https://www.linkedin.com/',
+        'base_url' => 'https://www.api.linkedin.com/v2/',
+        'auth_url' => 'https://www.linkedin.com/',
         'authorization_endpoint' => 'oauth/v2/authorization',
         'authentication_endpoint' => 'oauth/v2/token',
     ]);
@@ -143,17 +150,14 @@ To create an integration with the standard OAuth Authorization flow and link it'
 
     // Store the credentials for the integration with your own integration service (like the example down below: LinkedInService.php):
     $credentials = [
-        // Required with Authorization flow:
         'client_id' => 'xxxx1234',
-
-        // Optional with Authorization flow:
-        'scope' => '*',
+        'scope' => 'profile',
     ];
 
     $integration->setCredentials($credentials);
     
 ```
-## Building a OAuth Authorization integration service ##
+## Option 2: Building a OAuth Authorization integration service ##
 To implement an API integration in your Laravel project with the OAuth Authorization flow, you can extend the abstract class `BrendanMacKenzie\IntegrationManager\Utils\IntegrationService.php` inside your own integration service class.
 
 For example if you want to build an integration with the LinkedIn API, you can create your own `LinkedInService.php` class like this:
@@ -198,11 +202,14 @@ For example if you want to build an integration with the LinkedIn API, you can c
             $oAuthAuthorizationFlow = new OAuthAuthorizationCodeFlow(
                 $this->integration,
                 $this->apiClient,
-                false,                              // You can determine if you want to work with a state value to prevent yourself from CRSF attacks. Set true if you want to enable prevention.
+                false,              // You can determine if you want to work with a state value to prevent yourself from CRSF attacks. Set true if you want to enable prevention.
             );
 
             // This function sometimes returns a redirect URL for the user if the LinkedIn user has not granted your application yet.
-            return $oAuthAuthorizationFlow->authenticate();
+            $authorizationUrl = $oAuthAuthorizationFlow->authenticate();
+            if ($authorizationUrl) {
+                return $authorizationUrl;
+            }
         }
 
         // Example of a request on the LinkedIn API build with Integration Manager:
@@ -231,7 +238,7 @@ For example if you want to build an integration with the LinkedIn API, you can c
     }
 ```
 
-## Define a OAuth Client Credential flow integration for a project model ##
+## Option 3: Define an OAuth Client Credential flow integration for a project model ##
 To create an integration with the standard OAuth Client Credential flow and link it's credentials to a model inside your own project, start by doing the following...
 
 ```
@@ -245,8 +252,9 @@ To create an integration with the standard OAuth Client Credential flow and link
     $integration = Integration::create([
         'integration_option_id' => $integrationOption->id,
         'base_url' => 'https://www.linkedin.com/',
+        'auth_url' => null,
         'authorization_endpoint' => null,
-        'authentication_endpoint' => null,
+        'authentication_endpoint' => '/oauth/token',
     ]);
 
     // Associate your model to the integration.
@@ -262,7 +270,7 @@ To create an integration with the standard OAuth Client Credential flow and link
     $integration->setCredentials($credentials);
     
 ```
-## Building a OAuth Client Credential integration service ##
+## Option 3: Building a OAuth Client Credential integration service ##
 To implement an API integration in your Laravel project with the OAuth Client Credential flow, you can extend the abstract class `BrendanMacKenzie\IntegrationManager\Utils\IntegrationService.php` inside your own integration service class.
 
 For example if you want to build an integration with the LinkedIn API, you can create your own `LinkedInService.php` class like this:

@@ -14,6 +14,7 @@ class Integration extends Model
         'integration_option_id',
         'credentials',
         'base_url',
+        'auth_url',
         'authorization_endpoint',
         'authentication_endpoint',
     ];

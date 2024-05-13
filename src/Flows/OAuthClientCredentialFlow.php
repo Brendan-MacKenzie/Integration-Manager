@@ -55,7 +55,7 @@ class OAuthClientCredentialFlow implements AuthenticationInterface
         ];
 
         try {
-            $data = $this->apiClient->request('POST', $this->integration->authentication_endpoint, $body, [], false);
+            $data = $this->apiClient->request('POST', $this->integration->authentication_endpoint, $body, [], false, true);
 
             if (!array_key_exists('access_token', $data)) {
                 throw new OAuthException('Access token not received.');
