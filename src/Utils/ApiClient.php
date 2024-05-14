@@ -4,8 +4,7 @@ namespace BrendanMacKenzie\IntegrationManager\Utils;
 
 use Exception;
 use GuzzleHttp\Client;
-use GuzzleHttp\RequestOptions;
-use Illuminate\Support\Facades\Log;
+use GuzzleHttp\RequestOptions;;
 
 class ApiClient
 {
@@ -53,9 +52,6 @@ class ApiClient
             }
 
             $options[RequestOptions::HEADERS] = $allHeaders;
-
-            Log::debug('REQUEST:');
-            Log::debug($options);
 
             switch ($method) {
                 case 'POST':
