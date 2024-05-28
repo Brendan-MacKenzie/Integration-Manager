@@ -16,22 +16,25 @@ class OAuthAuthorizationCodeFlow implements AuthenticationInterface
     private $apiClient;
     private $withState;
     private $useFormParams;
+    private $redirectUrl;
 
     public function __construct(
         Integration $integration, 
         ApiClient $apiClient,
         bool $withState = false,
-        bool $useFormParams = false
+        bool $useFormParams = false,
+        ?string $redirectUrl = null
     ) {
         $this->integration = $integration;
         $this->apiClient = $apiClient;
         $this->withState = $withState;
         $this->useFormParams = $useFormParams;
+        $this->redirectUrl = ($redirectUrl) ? $redirectUrl : config('app.url').config('integrations.redirect_uri');
     }
 
-    private function getRedirectUrl(int $id)
+    private function getRedirectUrl()
     {
-        return config('app.url').config('integrations.redirect_uri');
+        return $this->redirectUrl;
     }
 
     public function authenticate()
@@ -93,7 +96,7 @@ class OAuthAuthorizationCodeFlow implements AuthenticationInterface
                 'code' => $code,
                 'client_id' => $this->integration->getCredential('client_id'),
                 'client_secret' => $this->integration->getCredential('client_secret'),
-                'redirect_uri' => $this->getRedirectUrl($this->integration->id),
+                'redirect_uri' => $this->getRedirectUrl(),
             ];
         }
 
@@ -180,8 +183,8 @@ class OAuthAuthorizationCodeFlow implements AuthenticationInterface
         $authorizationEndpoint = $this->apiClient->getAuthUrl().$this->integration->authorization_endpoint;
         $clientId = $this->integration->getCredential('client_id');
         $scope = $this->integration->getCredential('scope');
-        $redirectUri = $this->getRedirectUrl($this->integration->id);
-        $authorizationEndpoint = $authorizationEndpoint.'?response_type=code&client_id='.$clientId.'&redirect_uri='.$redirectUri;
+        $redirectUrl = $this->getRedirectUrl();
+        $authorizationEndpoint = $authorizationEndpoint.'?response_type=code&client_id='.$clientId.'&redirect_uri='.$redirectUrl;
 
         if ($this->withState) {
             $this->integration->addCredential('state', Str::random(16));

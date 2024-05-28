@@ -204,8 +204,9 @@ For example if you want to build an integration with the Exact Online API, you c
             $oAuthAuthorizationFlow = new OAuthAuthorizationCodeFlow(
                 $this->integration,
                 $this->apiClient,
-                false,              // You can determine if you want to work with a state value to prevent yourself from CRSF attacks. Set true if you want to enable prevention.
-                true                // Sometimes a Authorization Grant flow for an API requires you to make the authorization request with a x-www-form-urlencoded encoded body. You can turn this one with the $useFormParams parameter.
+                false,                                      // You can determine if you want to work with a state value to prevent yourself from CRSF attacks. Set true if you want to enable prevention.
+                true,                                       // Sometimes a Authorization Grant flow for an API requires you to make the authorization request with a x-www-form-urlencoded encoded body. You can turn this one with the $useFormParams parameter.
+                'https://localhost/integration/callback',   // You can customize the redirect URL after the authorization. On default the endpoint in your integrations config file is used.
             );
 
             // This function returns a authorization redirect URL for the user if the Exact Online user has not granted your application yet.
