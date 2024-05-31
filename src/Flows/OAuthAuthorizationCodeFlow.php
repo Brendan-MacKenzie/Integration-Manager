@@ -180,22 +180,22 @@ class OAuthAuthorizationCodeFlow implements AuthenticationInterface
 
     private function authorize() 
     {
-        $authorizationEndpoint = $this->apiClient->getAuthUrl().$this->integration->authorization_endpoint;
+        $authorizationUrl = $this->integration->authorization_url;
         $clientId = $this->integration->getCredential('client_id');
         $scope = $this->integration->getCredential('scope');
         $redirectUrl = $this->getRedirectUrl();
-        $authorizationEndpoint = $authorizationEndpoint.'?response_type=code&client_id='.$clientId.'&redirect_uri='.$redirectUrl;
+        $authorizationUrl = $authorizationUrl.'?response_type=code&client_id='.$clientId.'&redirect_uri='.$redirectUrl;
 
         if ($this->withState) {
             $this->integration->addCredential('state', Str::random(16));
             $state = $this->integration->getCredential('state');
-            $authorizationEndpoint = $authorizationEndpoint.'&state='.$state;
+            $authorizationUrl = $authorizationUrl.'&state='.$state;
         }
 
         if ($scope) {
-            $authorizationEndpoint = $authorizationEndpoint.'&scope='.$scope;
+            $authorizationUrl = $authorizationUrl.'&scope='.$scope;
         }
 
-        return $authorizationEndpoint;
+        return $authorizationUrl;
     }
 }

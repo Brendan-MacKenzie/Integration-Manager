@@ -37,7 +37,7 @@ To link an integration and it's credentials to a model inside your own project, 
         'integration_option_id' => $integrationOption->id,
         'base_url' => 'https://api.whatsapp.com/v1/',
         'auth_url' => 'https://api.whatsapp.com/v1/',
-        'authorization_endpoint' => null,
+        'authorization_url' => null,
         'authentication_endpoint' => null,
     ]);
 
@@ -143,9 +143,9 @@ To create an integration with the standard OAuth Authorization flow and link it'
     $integration = Integration::create([
         'integration_option_id' => $integrationOption->id,
         'base_url' => 'https://start.exactonline.nl/api/',
-        'auth_url' => 'https://start.exactonline.nl/api/',
-        'authorization_endpoint' => '/oauth2/auth',
-        'authentication_endpoint' => '/oauth2/token',
+        'auth_url' => 'https://start.exactonline.nl/api/oauth2',
+        'authorization_url' => 'https://auth.exactonline.nl/oauth2/auth',
+        'authentication_endpoint' => '/token',
     ]);
 
     // Associate your model to the integration.
