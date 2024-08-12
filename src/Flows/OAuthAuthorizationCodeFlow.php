@@ -16,6 +16,7 @@ class OAuthAuthorizationCodeFlow implements AuthenticationInterface
     private $apiClient;
     private $withState;
     private $useFormParams;
+    private $useAuthUrlForToken;
     private $redirectUrl;
 
     public function __construct(
@@ -23,12 +24,14 @@ class OAuthAuthorizationCodeFlow implements AuthenticationInterface
         ApiClient $apiClient,
         bool $withState = false,
         bool $useFormParams = false,
+        bool $useAuthUrlForToken = true,
         ?string $redirectUrl = null
     ) {
         $this->integration = $integration;
         $this->apiClient = $apiClient;
         $this->withState = $withState;
         $this->useFormParams = $useFormParams;
+        $this->useAuthUrlForToken = $useAuthUrlForToken;
         $this->redirectUrl = ($redirectUrl) ? $redirectUrl : config('app.url').config('integrations.redirect_uri');
     }
 
@@ -66,8 +69,7 @@ class OAuthAuthorizationCodeFlow implements AuthenticationInterface
         }
     }
 
-    public function getAccessToken()
-    {
+    public function getAccessToken() {
         if (!$this->integration->authentication_endpoint) {
             throw new OAuthException("Authentication endpoint not provided.");
         }
@@ -101,7 +103,7 @@ class OAuthAuthorizationCodeFlow implements AuthenticationInterface
         }
 
         try {
-            $data = $this->apiClient->request('POST', $this->integration->authentication_endpoint, $body, [], false, true, $this->useFormParams);
+            $data = $this->apiClient->request('POST', $this->integration->authentication_endpoint, $body, [], false, $this->useAuthUrlForToken, $this->useFormParams);
 
             if (!is_array($data) || !array_key_exists('access_token', $data)) {
                 throw new OAuthException('Access token not received.');
