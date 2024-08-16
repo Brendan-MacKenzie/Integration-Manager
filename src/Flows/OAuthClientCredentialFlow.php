@@ -12,11 +12,16 @@ class OAuthClientCredentialFlow implements AuthenticationInterface
 {
     private $integration;
     private $apiClient;
+    private $useFormParams;
 
-    public function __construct(Integration $integration, ApiClient $apiClient)
-    {
+    public function __construct(
+        Integration $integration, 
+        ApiClient $apiClient,
+        bool $useFormParams = true
+    ) {
         $this->integration = $integration;
         $this->apiClient = $apiClient;
+        $this->useFormParams = $useFormParams;
     }
 
     public function authenticate()
@@ -54,8 +59,14 @@ class OAuthClientCredentialFlow implements AuthenticationInterface
             'client_secret' => $this->integration->getCredential('client_secret'),
         ];
 
+        $scope = $this->integration->getCredential('scope');
+
+        if ($scope) {
+            $body['scope'] = $scope;
+        }
+
         try {
-            $data = $this->apiClient->request('POST', $this->integration->authentication_endpoint, $body, [], false, true);
+            $data = $this->apiClient->request('POST', $this->integration->authentication_endpoint, $body, [], false, true, $this->useFormParams);
 
             if (!array_key_exists('access_token', $data)) {
                 throw new OAuthException('Access token not received.');
