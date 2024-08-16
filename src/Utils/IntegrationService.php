@@ -33,7 +33,9 @@ abstract class IntegrationService implements IntegrationServiceInterface
         string $endpoint, 
         array $body = [], 
         array $headers = [],
-        bool $includeAuthentication = true
+        bool $includeAuthentication = true,
+        bool $useAuthUrl = false,
+        bool $useFormParams = false
     ) {
         if ($includeAuthentication) {
             $authentication = $this->authenticate();
@@ -42,6 +44,6 @@ abstract class IntegrationService implements IntegrationServiceInterface
             }
         }
 
-        return $this->apiClient->request($method, $endpoint, $body, $headers, $includeAuthentication);
+        return $this->apiClient->request($method, $endpoint, $body, $headers, $includeAuthentication, $useAuthUrl, $useFormParams);
     }
 }
