@@ -23,7 +23,8 @@ class ApiClient
         array $customHeaders = [],
         bool $includeAuthenticationHeaders = true,
         bool $isAuthUrl = false,
-        bool $useFormParams = false
+        bool $useFormParams = false,
+        bool $returnResponseObject = false
     ) {
         try {
             $url = ($isAuthUrl) ? $this->getAuthUrl() : $this->getBaseUrl();
@@ -90,10 +91,10 @@ class ApiClient
             throw new Exception('Bad response on request in IntegrationService. Message: '. $exception->getMessage());
         }
 
-        return $this->verifyResponse($response); 
+        return $this->verifyResponse($response, $returnResponseObject); 
     }
 
-    public function verifyResponse($response)
+    public function verifyResponse($response, bool $returnResponseObject)
     {
         // TODO: support json, streams, files etc..
         
@@ -105,7 +106,7 @@ class ApiClient
             throw new Exception("Bad Integration Response: {$contents}");
         }
         
-        return json_decode($response->getBody(), true);
+        return $returnResponseObject ? $response : json_decode($response->getBody(), true);
     }
 
     public function setBaseUrl(string $baseUrl)
